@@ -21,3 +21,8 @@ yolov8n_horizon：地平线模型、测试（量化）图像、测试结果、�
 说明：推理测试预处理没有考虑等比率缩放，激活函数 SiLU 用 Relu 进行了替换。由于使用的是coco128数据进行训练的，且迭代的次数不多，效果并不是很好，仅供测试流程用。
 
 导出onnx参考 [yolov8n 瑞芯微RKNN和地平线Horizon芯片仿真测试部署，部署工程难度小、模型推理速度快](https://blog.csdn.net/zhangqian_1/article/details/135523096)
+
+
+# 4 tensorRT 优化前后时耗
+tensorRT部署推理10000次的平均时耗（显卡 Tesla V100、cuda_11.0）
+![在这里插入图片描述](https://img-blog.csdnimg.cn/direct/d7c5ecb20f80455e8236a798d1ee2534.png)

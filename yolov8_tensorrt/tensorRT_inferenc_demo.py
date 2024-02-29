@@ -156,19 +156,21 @@ def sigmoid(x):
     return 1 / (1 + exp(-x))
 
 
-
 def postprocess(out, img_h, img_w):
     print('postprocess ... ')
 
     detectResult = []
     output = []
     for i in range(len(out)):
+        print(out[i].shape)
         output.append(out[i].reshape((-1)))
 
     scale_h = img_h / input_imgH
     scale_w = img_w / input_imgW
 
     gridIndex = -2
+    cls_index = 0
+    cls_max = 0
 
     for index in range(headNum):
         reg = output[index * 2 + 0]
@@ -178,45 +180,59 @@ def postprocess(out, img_h, img_w):
             for w in range(mapSize[index][1]):
                 gridIndex += 2
 
-                for cl in range(class_num):
-                    cls_val = sigmoid(cls[cl * mapSize[index][0] * mapSize[index][1] + h * mapSize[index][1] + w])
+                if 1 == class_num:
+                    cls_max = sigmoid(cls[0 * mapSize[index][0] * mapSize[index][1] + h * mapSize[index][1] + w])
+                    cls_index = 0
+                else:
+                    for cl in range(class_num):
+                        cls_val = cls[cl * mapSize[index][0] * mapSize[index][1] + h * mapSize[index][1] + w]
+                        if 0 == cl:
+                            cls_max = cls_val
+                            cls_index = cl
+                        else:
+                            if cls_val > cls_max:
+                                cls_max = cls_val
+                                cls_index = cl
+                    cls_max = sigmoid(cls_max)
 
-                    if cls_val > objectThresh:
-                        regdfl = []
-                        for lc in range(4):
-                            sfsum = 0
-                            locval = 0
-                            for df in range(16):
-                                temp = exp(reg[((lc * 16) + df) * mapSize[index][0] * mapSize[index][1] + h * mapSize[index][1] + w])
-                                reg[((lc * 16) + df) * mapSize[index][0] * mapSize[index][1] + h * mapSize[index][1] + w] = temp
-                                sfsum += temp
+                if cls_max > objectThresh:
+                    regdfl = []
+                    for lc in range(4):
+                        sfsum = 0
+                        locval = 0
+                        for df in range(16):
+                            temp = exp(reg[((lc * 16) + df) * mapSize[index][0] * mapSize[index][1] + h * mapSize[index][1] + w])
+                            reg[((lc * 16) + df) * mapSize[index][0] * mapSize[index][1] + h * mapSize[index][1] + w] = temp
+                            sfsum += temp
 
-                            for df in range(16):
-                                sfval = reg[((lc * 16) + df) * mapSize[index][0] * mapSize[index][1] + h * mapSize[index][1] + w] / sfsum
-                                locval += sfval * df
-                            regdfl.append(locval)
+                        for df in range(16):
+                            sfval = reg[((lc * 16) + df) * mapSize[index][0] * mapSize[index][1] + h * mapSize[index][1] + w] / sfsum
+                            locval += sfval * df
+                        regdfl.append(locval)
 
-                        x1 = (meshgrid[gridIndex + 0] - regdfl[0]) * strides[index]
-                        y1 = (meshgrid[gridIndex + 1] - regdfl[1]) * strides[index]
-                        x2 = (meshgrid[gridIndex + 0] + regdfl[2]) * strides[index]
-                        y2 = (meshgrid[gridIndex + 1] + regdfl[3]) * strides[index]
-                        xmin = x1 * scale_w
-                        ymin = y1 * scale_h
-                        xmax = x2 * scale_w
-                        ymax = y2 * scale_h
+                    x1 = (meshgrid[gridIndex + 0] - regdfl[0]) * strides[index]
+                    y1 = (meshgrid[gridIndex + 1] - regdfl[1]) * strides[index]
+                    x2 = (meshgrid[gridIndex + 0] + regdfl[2]) * strides[index]
+                    y2 = (meshgrid[gridIndex + 1] + regdfl[3]) * strides[index]
 
-                        xmin = xmin if xmin > 0 else 0
-                        ymin = ymin if ymin > 0 else 0
-                        xmax = xmax if xmax < img_w else img_w
-                        ymax = ymax if ymax < img_h else img_h
+                    xmin = x1 * scale_w
+                    ymin = y1 * scale_h
+                    xmax = x2 * scale_w
+                    ymax = y2 * scale_h
 
-                        box = DetectBox(cl, cls_val, xmin, ymin, xmax, ymax)
-                        detectResult.append(box)
+                    xmin = xmin if xmin > 0 else 0
+                    ymin = ymin if ymin > 0 else 0
+                    xmax = xmax if xmax < img_w else img_w
+                    ymax = ymax if ymax < img_h else img_h
+
+                    box = DetectBox(cls_index, cls_max, xmin, ymin, xmax, ymax)
+                    detectResult.append(box)
     # NMS
     print('detectResult:', len(detectResult))
     predBox = NMS(detectResult)
 
     return predBox
+
 
 def preprocess(src):
     img = cv2.resize(src, (input_imgW, input_imgH)).astype(np.float32)

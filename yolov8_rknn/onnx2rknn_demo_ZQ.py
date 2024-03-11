@@ -38,14 +38,13 @@ input_imgW = 640
 
 
 class DetectBox:
-    def __init__(self, classId, score, xmin, ymin, xmax, ymax, head):
+    def __init__(self, classId, score, xmin, ymin, xmax, ymax):
         self.classId = classId
         self.score = score
         self.xmin = xmin
         self.ymin = ymin
         self.xmax = xmax
         self.ymax = ymax
-        self.head = head
 
 def GenerateMeshgrid():
     for index in range(headNum):

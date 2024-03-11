@@ -270,7 +270,7 @@ if __name__ == '__main__':
 
         cv2.rectangle(orig_img, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
         ptext = (xmin, ymin)
-        title = CLASSES[classId] + ":%d:%.2f" % (head, score)
+        title = CLASSES[classId] + ":%.2f" % (score)
         cv2.putText(orig_img, title, ptext, cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2, cv2.LINE_AA)
 
     cv2.imwrite('./test_rknn_result.jpg', orig_img)

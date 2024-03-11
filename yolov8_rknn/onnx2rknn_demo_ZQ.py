@@ -266,7 +266,6 @@ if __name__ == '__main__':
         ymax = int(predbox[i].ymax)
         classId = predbox[i].classId
         score = predbox[i].score
-        head = predbox[i].head
 
         cv2.rectangle(orig_img, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
         ptext = (xmin, ymin)
